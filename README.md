@@ -29,7 +29,7 @@ The `sensor_data` table has the following columns:
 1. Ensure the required serial devices are connected to the specified ports.
 2. Run the script:
 ```bash
-python dbScript_schema.py
+python3 dbScript_schema.py
 ```
 The script will create the database (if it doesn't already exist) and start reading sensor data.
 
