@@ -63,7 +63,7 @@ def create_database():
     conn.close()
 
 def read_sensors():
-    conn = sqlite3.connect("data_acquisition_test.db")
+    conn = sqlite3.connect("data_acquisition.db")
     cursor = conn.cursor()
 
     # Force
