@@ -5,6 +5,7 @@ import time
 import sqlite3
 import random
 import uuid
+import re
 
 ''' 
 def convert_to_decimal(coord, direction):
@@ -62,6 +63,12 @@ def create_database():
     conn.commit()
     conn.close()
 
+def strtof(s):
+    fmatch = re.match(r'([0-9]+\.[0-9]+)', s, re.S)
+    if fmatch is not None:
+        return float(fmatch.group(0))
+    else:
+        return float("NaN")
 def read_sensors():
     conn = sqlite3.connect("data_acquisition.db")
     cursor = conn.cursor()
@@ -89,7 +96,7 @@ def read_sensors():
     accel, gyro = generate_accel_gyro()
     dac = generate_dac()
 
-    session_id = str(uuid.uuid4())
+    session_id = int(datetime.datetime.now().timestamp())
 
     try:
         while True:
@@ -124,7 +131,7 @@ def read_sensors():
             if ser.in_waiting > 0 and ser2.in_waiting > 0 and ser3.in_waiting > 0:
                 line = ser.readline().decode('utf-8').rstrip()
                 sensor = line.split(",")
-                dac[2] = sensor[0]                               
+                dac[2] = strtof(sensor[0])
                 #line1 = ser1.readline().decode('utf-8').rstrip()
                 #sensor1 = line1.split(",")
                 #lat = convert_to_decimal(sensor1[1], sensor1[2])
