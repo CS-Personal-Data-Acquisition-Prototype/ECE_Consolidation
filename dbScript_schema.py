@@ -6,6 +6,35 @@ import sqlite3
 import random
 import uuid
 import re
+import threading
+
+
+dataqlock = threading.Lock()
+
+def dataqcycle(dataq):
+    conn = sqlite3.connect("data_acquisition.db")
+    cursor = conn.cursor()
+    while 1:
+        time.sleep(0.1)
+        dataqlock.acquire()
+        print("len = %d" % len(dataq))
+        if len(dataq) > 0:
+            cursor.executemany(
+                            """
+                        INSERT INTO sensor_data (
+                            sessionID, timestamp, latitude, longitude, altitude,
+                            accel_x, accel_y, accel_z,
+                            gyro_x, gyro_y, gyro_z,
+                            dac_1, dac_2, dac_3, dac_4
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                            dataq,
+                        )
+            dataq.clear()
+            conn.commit()
+        dataqlock.release()
+
+
 
 ''' 
 def convert_to_decimal(coord, direction):
@@ -64,14 +93,13 @@ def create_database():
     conn.close()
 
 def strtof(s):
-    fmatch = re.match(r'([0-9]+\.[0-9]+)', s, re.S)
+    fmatch = re.match(r'-?([0-9]*\.[0-9]+)', s, re.S)
     if fmatch is not None:
         return float(fmatch.group(0))
     else:
         return float("NaN")
 def read_sensors():
-    conn = sqlite3.connect("data_acquisition.db")
-    cursor = conn.cursor()
+    
 
     # Force
     ser = serial.Serial('/dev/ttyACM0', 250000)
@@ -97,7 +125,9 @@ def read_sensors():
     dac = generate_dac()
 
     session_id = int(datetime.datetime.now().timestamp())
-
+    dataq = []
+    dataqthread = threading.Thread(target=dataqcycle, args=(dataq,))
+    dataqthread.start()
     try:
         while True:
             timestamp = datetime.datetime.now().isoformat(timespec='milliseconds')
@@ -155,16 +185,8 @@ def read_sensors():
                 #print(f"{timestamp},{lat},{lon},{accel[0]},{accel[1]},{accel[2]},{dac[0]},{dac[1]},{dac[2]}")
                 #print(f"{dac[0]}")
                 print(f"{dac[0]},{dac[1]},{dac[2]},{accel[0]},{accel[1]},{accel[2]},{gyro[0]},{gyro[1]},{gyro[2]}")
-                cursor.execute(
-                    """
-                INSERT INTO sensor_data (
-                    sessionID, timestamp, latitude, longitude, altitude,
-                    accel_x, accel_y, accel_z,
-                    gyro_x, gyro_y, gyro_z,
-                    dac_1, dac_2, dac_3, dac_4
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
+                dataqlock.acquire()
+                dataq.append((
                         session_id,
                         timestamp,
                         lat,
@@ -180,10 +202,10 @@ def read_sensors():
                         dac[1],
                         dac[2],
                         dac[3],
-                    ),
-                )
-                conn.commit()
-        conn.close()
+                    ))
+                dataqlock.release()
+
+
 
     except KeyboardInterrupt:
         print(f"\nTerminated with keyboard interrupt\n")

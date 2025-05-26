@@ -52,7 +52,7 @@ pip install pyserial
  - Modify the serial port paths (/dev/ttyACM0, etc.) as needed for your system.
 
 ## Keyboard Interrupt
-To stop the script, press Ctrl+C. The script will terminate gracefully.
+To stop the script, press Ctrl+C twice. The script will terminate gracefully.
 
 ## Disclaimer
 This script is provided as-is and may require modifications to suit specific hardware configurations or data acquisition requirements. 
