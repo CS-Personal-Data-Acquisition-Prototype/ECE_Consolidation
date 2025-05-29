@@ -148,36 +148,81 @@ def read_sensors():
                 #print(f"{timestamp},{lat},{lon},{accel[0]},{accel[1]},{accel[2]},{dac[0]},{dac[1]},{dac[2]}")
                 #print(f"{dac[0]}")
                 print(f"{dac[0]},{dac[1]},{dac[2]},{accel[0]},{accel[1]},{accel[2]},{gyro[0]},{gyro[1]},{gyro[2]}")
-                cursor.execute(
-                    """
-                INSERT INTO sensor_data (
-                    sessionID, timestamp, latitude, longitude, altitude,
-                    accel_x, accel_y, accel_z,
-                    gyro_x, gyro_y, gyro_z,
-                    dac_1, dac_2, dac_3, dac_4
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        session_id,
-                        timestamp,
-                        lat,
-                        lon,
-                        alt,
-                        accel[0],
-                        accel[1],
-                        accel[2],
-                        gyro[0],
-                        gyro[1],
-                        gyro[2],
-                        dac[0],
-                        dac[1],
-                        dac[2],
-                        dac[3],
-                    ),
-                )
-                conn.commit()
-        conn.close()
+    #             cursor.execute(
+    #                 """
+    #             INSERT INTO sensor_data (
+    #                 sessionID, timestamp, latitude, longitude, altitude,
+    #                 accel_x, accel_y, accel_z,
+    #                 gyro_x, gyro_y, gyro_z,
+    #                 dac_1, dac_2, dac_3, dac_4
+    #             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    #             """,
+    #                 (
+    #                     session_id,
+    #                     timestamp,
+    #                     lat,
+    #                     lon,
+    #                     alt,
+    #                     accel[0],
+    #                     accel[1],
+    #                     accel[2],
+    #                     gyro[0],
+    #                     gyro[1],
+    #                     gyro[2],
+    #                     dac[0],
+    #                     dac[1],
+    #                     dac[2],
+    #                     dac[3],
+    #                 ),
+    #             )
+    #             conn.commit()
+    #     conn.close()
 
+    # except KeyboardInterrupt:
+    #     print(f"\nTerminated with keyboard interrupt\n")
+    #     sys.exit(0)
+
+                conn = None
+                try:
+                    conn = sqlite3.connect("data_acquisition.db")
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """
+                    INSERT INTO sensor_data (
+                        sessionID, timestamp, latitude, longitude, altitude,
+                        accel_x, accel_y, accel_z,
+                        gyro_x, gyro_y, gyro_z,
+                        dac_1, dac_2, dac_3, dac_4
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                        (
+                            session_id,
+                            timestamp,
+                            lat,
+                            lon,
+                            alt,
+                            accel[0],
+                            accel[1],
+                            accel[2],
+                            gyro[0],
+                            gyro[1],
+                            gyro[2],
+                            dac[0],
+                            dac[1],
+                            dac[2],
+                            dac[3],
+                        ),
+                    )
+                    conn.commit()
+                except sqlite3.Error as e:
+                    print(f"Database error: {e}")
+                finally:
+                    if conn:
+                        conn.close()
+                
+                # Add a small delay to prevent overwhelming the database
+                time.sleep(0.01)
+    
     except KeyboardInterrupt:
         print(f"\nTerminated with keyboard interrupt\n")
         sys.exit(0)
